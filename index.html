@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Jethrel Pormento</title>
+        <link rel="stylesheet" href="static/css/styles.css">
+    </head>
+    
+    <body>
+        <div class="container">
+            <button id="openResumeBtn">View Resume</button>
+        </div>
+        
+        <!-- Modal for displaying the resume -->
+            <div id="resumeModal" class="modal">
+                <div class="modal-content">
+                    <span id="closeBtn" class="close-btn">&times;</span>
+                    <embed src="static/data/resume.pdf#sidebar=0" width="100%" height="100%" type="application/pdf">
+                </div>
+            </div>
+        
+            <script src="static/js/resumeButton.js"></script>
+    </body>
+</html>
