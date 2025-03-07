@@ -1,15 +1,20 @@
+:root {
+  --window-width: 80%;
+  --window-height: 80%;
+}
+
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f9;
   background-image: url('../images/windows.jpeg');
-  background-size: cover;  /* Ensure the image covers the full page */
-  background-position: center; /* Center the background */
+  background-size: cover;
+  background-position: center;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   height: 100vh;
   margin: 0;
-  position: relative; /* Added to ensure proper stacking of elements */
+  position: relative;
 }
 
 .desktop {
@@ -17,13 +22,12 @@ body {
   flex-wrap: wrap;
   justify-content: flex-start;
   align-items: center;
-  height: calc(100vh - 35px); /* Adjusted to allow space for the taskbar */
+  height: calc(100vh - 30px);
   padding: 10px;
-  position: relative; /* Make the desktop area relative for positioning the icons */
-  z-index: 1; /* Ensure icons are above the background */
+  position: relative;
+  z-index: 1;
 }
 
-/* Position the resume icon in the top left */
 .desktop-icon {
   display: flex;
   flex-direction: column;
@@ -33,8 +37,8 @@ body {
   cursor: pointer;
   text-align: center;
   position: absolute;
-  top: 10px; /* Move the icon to the top */
-  left: 10px; /* Move the icon to the left */
+  top: 10px;
+  left: 10px;
 }
 
 .desktop-icon-img {
@@ -76,22 +80,32 @@ body {
   height: 24px;
 }
 
-.taskbar-item:hover {
-  background-color: #2980b9;
-}
-
 .window {
   display: none;
   position: fixed;
-  top: 50%;
+  top: 0;
   left: 50%;
-  transform: translate(-50%, -50%);
-  width: 80%;
-  height: 80%;
+  transform: translateX(-50%); /* Centers the window horizontally */
+  width: var(--window-width);
+  height: var(--window-height);
   background-color: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
   z-index: 2;
+}
+
+.window-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: calc(100% - 30px); /* Adjust for the header height */
+  overflow: hidden; /* Prevents content from escaping */
+}
+
+.window-content embed {
+  width: 100%;
+  height: 100%;
 }
 
 .window-header {
@@ -123,7 +137,7 @@ body {
   object-fit: contain;
 }
 
-.minimize-btn:hover, .maximize-btn:hover, .close-btn:hover {
+.minimize-btn:hover, .maximize-btn:hover, .close-btn:hover, .desktop-icon:hover, .taskbar-item:hover {
   background-color: rgba(255, 255, 255, 0.2);
 }
 
@@ -137,15 +151,4 @@ body {
 
 .close-btn {
   right: 10px;
-}
-
-.window-content {
-  padding: 20px;
-  overflow: auto;
-}
-
-window-content embed {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
 }

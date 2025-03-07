@@ -9,72 +9,73 @@ const closeBtn = document.getElementById('closeBtn');
 let isWindowOpen = false;
 let isWindowMaximized = false;
 let taskbarItem = null;
+let previousStyles = {};
+
+const taskbarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--taskbar-height'));
+const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
 
 function openResumeWindow() {
     if (!isWindowOpen) {
         resumeWindow.style.display = 'block';
+        fitResumeWindow();
 
-        // Create a taskbar item for the opened window
-        taskbarItem = document.createElement('div');
-        taskbarItem.classList.add('taskbar-item');
-        taskbarItem.innerHTML = `
-            <img src="static/images/pdf.svg" alt="Resume Icon" class="taskbar-icon-img" />
-        `;
+        if (!taskbarItem) {
+            taskbarItem = document.createElement('div');
+            taskbarItem.classList.add('taskbar-item');
+            taskbarItem.innerHTML = `<img src="static/images/pdf.svg" alt="Resume Icon" class="taskbar-icon-img" />`;
 
-        // When the taskbar item is clicked, toggle the visibility of the window
-        taskbarItem.addEventListener('click', () => {
-            if (resumeWindow.style.display === 'none') {
-                resumeWindow.style.display = 'block';
-            } else {
-                resumeWindow.style.display = 'none';
-            }
-        });
+            taskbarItem.addEventListener('click', () => {
+                resumeWindow.style.display = resumeWindow.style.display === 'none' ? 'block' : 'none';
+            });
 
-        // Append the taskbar item to the taskbar
-        taskbar.appendChild(taskbarItem);
+            taskbar.appendChild(taskbarItem);
+        }
 
         isWindowOpen = true;
     }
 }
 
-resumeIcon.addEventListener('click', openResumeWindow);
+function fitResumeWindow() {
+    resumeWindow.style.width = 'var(--window-width)';
+    resumeWindow.style.height = `calc(100vh - ${taskbarHeight + 20}px)`;
+    resumeWindow.style.top = `${taskbarHeight + 10}px`;
+    resumeWindow.style.left = '50%';
+    resumeWindow.style.transform = 'translate(-50%, 0)';
 
-//Autofit to window size
-window.addEventListener('resize', () => {
-    pdfViewer.style.height = `${resumeWindow.clientHeight - 40}px`;
-});
+    pdfViewer.style.width = '100%';
+    pdfViewer.style.height = '100%';
+}
 
-minimizeBtn.addEventListener('click', () => {
-    resumeWindow.style.display = 'none';
-});
+function maximizeResumeWindow() {
+    if (!isWindowMaximized) {
+        previousStyles = {
+            width: resumeWindow.style.width,
+            height: resumeWindow.style.height,
+            top: resumeWindow.style.top,
+            left: resumeWindow.style.left,
+            transform: resumeWindow.style.transform,
+            boxShadow: resumeWindow.style.boxShadow
+        };
 
-maximizeBtn.addEventListener('click', () => {
-    if (isWindowMaximized) {
-        resumeWindow.style.width = '80%';
-        resumeWindow.style.height = '80%';
-        resumeWindow.style.top = '50%';
-        resumeWindow.style.left = '50%';
-        resumeWindow.style.transform = 'translate(-50%, -50%)';
-        isWindowMaximized = false;
-    } else {
-        resumeWindow.style.width = '100%';
-        resumeWindow.style.height = '100%';
+        const taskbarRect = taskbar.getBoundingClientRect(); // Get taskbar position
+        const availableHeight = taskbarRect.top; // Distance from top of screen to taskbar
+
+        resumeWindow.style.width = '100vw';
+        resumeWindow.style.height = `${availableHeight}px`; // Ensures it stops at the taskbar
         resumeWindow.style.top = '0';
         resumeWindow.style.left = '0';
         resumeWindow.style.transform = 'none';
+        resumeWindow.style.boxShadow = 'none';
+
         isWindowMaximized = true;
+    } else {
+        Object.assign(resumeWindow.style, previousStyles);
+        isWindowMaximized = false;
     }
-});
+}
 
-closeBtn.addEventListener('click', () => {
-    resumeWindow.style.display = 'none';
-
-    // Remove the taskbar icon
-    if (taskbarItem) {
-        taskbar.removeChild(taskbarItem);
-    }
-
-    // Reset the state
-    isWindowMaximized = false;
-    isWindowOpen = false;
-});
+resumeIcon.addEventListener('click', openResumeWindow);
+window.addEventListener('resize', fitResumeWindow);
+minimizeBtn.addEventListener('click', () => resumeWindow.style.display = 'none');
+maximizeBtn.addEventListener('click', maximizeResumeWindow);
+closeBtn.addEventListener('click', () => { resumeWindow.style.display = 'none'; taskbar.removeChild(taskbarItem); isWindowOpen = false; });
