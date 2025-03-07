@@ -1,70 +1,151 @@
 body {
   font-family: Arial, sans-serif;
   background-color: #f4f4f9;
-  background-image: url('../images/windows.webp');
-  background-size: contain;
-  background-position: center center;
-  background-repeat: no-repeat;
+  background-image: url('../images/windows.jpeg');
+  background-size: cover;  /* Ensure the image covers the full page */
+  background-position: center; /* Center the background */
   display: flex;
-  justify-content: center;
-  align-items: center;
+  flex-direction: column;
+  justify-content: flex-start;
   height: 100vh;
   margin: 0;
+  position: relative; /* Added to ensure proper stacking of elements */
 }
 
-.container {
-  text-align: center;
-  padding: 20px;
+.desktop {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  align-items: center;
+  height: calc(100vh - 35px); /* Adjusted to allow space for the taskbar */
+  padding: 10px;
+  position: relative; /* Make the desktop area relative for positioning the icons */
+  z-index: 1; /* Ensure icons are above the background */
 }
 
-button {
-  padding: 10px 20px;
-  background-color: #3498db;
-  color: white;
-  font-size: 16px;
-  border: none;
+/* Position the resume icon in the top left */
+.desktop-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 10px;
   cursor: pointer;
-  border-radius: 5px;
-  transition: background-color 0.3s ease;
+  text-align: center;
+  position: absolute;
+  top: 10px; /* Move the icon to the top */
+  left: 10px; /* Move the icon to the left */
 }
 
-button:hover {
+.desktop-icon-img {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 5px;
+}
+
+.desktop-icon-name {
+  font-size: 12px;
+  color: #333;
+}
+
+.taskbar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background-color: #34495e;
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 10px;
+  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.1);
+  height: 30px;
+}
+
+.taskbar-item {
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  margin: 0 5px;
+}
+
+.taskbar-icon-img {
+  width: 24px;
+  height: 24px;
+}
+
+.taskbar-item:hover {
   background-color: #2980b9;
 }
 
-.modal {
+.window {
   display: none;
   position: fixed;
-  z-index: 1;
-  left: 0;
-  top: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-.modal-content {
-  position: relative;
-  margin: auto;
   top: 50%;
-  transform: translateY(-50%);
-  background-color: white;
-  padding: 20px;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: 80%;
   height: 80%;
+  background-color: white;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
   border-radius: 10px;
+  z-index: 2;
+}
+
+.window-header {
+  background-color: #3498db;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 10px;
+  height: 30px;
+  position: relative;
+}
+
+.minimize-btn, .maximize-btn, .close-btn {
+  background-color: transparent;
+  border: none;
+  color: white;
+  cursor: pointer;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 28px;
+  height: 28px;
+}
+
+.minimize-btn img, .maximize-btn img, .close-btn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.minimize-btn:hover, .maximize-btn:hover, .close-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.minimize-btn {
+  right: 70px;
+}
+
+.maximize-btn {
+  right: 40px;
 }
 
 .close-btn {
-  position: absolute;
-  top: 10px;
   right: 10px;
-  font-size: 30px;
-  color: #aaa;
-  cursor: pointer;
 }
 
-.close-btn:hover {
-  color: black;
+.window-content {
+  padding: 20px;
+  overflow: auto;
+}
+
+window-content embed {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
