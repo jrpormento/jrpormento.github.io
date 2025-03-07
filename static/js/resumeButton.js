@@ -5,11 +5,14 @@ const pdfViewer = document.getElementById('pdfViewer');
 const minimizeBtn = document.getElementById('minimizeBtn');
 const maximizeBtn = document.getElementById('maximizeBtn');
 const closeBtn = document.getElementById('closeBtn');
+const windowHeader = document.querySelector('.window-header');
 
 let isWindowOpen = false;
 let isWindowMaximized = false;
 let taskbarItem = null;
 let previousStyles = {};
+let isDragging = false;
+let offsetX, offsetY;
 
 const taskbarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--taskbar-height'));
 const headerHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--header-height'));
@@ -19,10 +22,15 @@ function openResumeWindow() {
         resumeWindow.style.display = 'block';
         fitResumeWindow();
 
-        if (!taskbarItem) {
+        // Ensure taskbar item is recreated if missing
+        if (!taskbarItem || !document.body.contains(taskbarItem)) {
             taskbarItem = document.createElement('div');
             taskbarItem.classList.add('taskbar-item');
-            taskbarItem.innerHTML = `<img src="static/images/pdf.svg" alt="Resume Icon" class="taskbar-icon-img" />`;
+            taskbarItem.innerHTML = `
+                <div class="taskbar-icon-wrapper">
+                    <img src="static/images/pdf.svg" alt="Resume Icon" class="taskbar-icon-img" />
+                </div>
+            `;
 
             taskbarItem.addEventListener('click', () => {
                 resumeWindow.style.display = resumeWindow.style.display === 'none' ? 'block' : 'none';
@@ -74,8 +82,67 @@ function maximizeResumeWindow() {
     }
 }
 
+// Ensure dragging doesn't occur when clicking minimize, maximize, or close buttons
+windowHeader.addEventListener('mousedown', (event) => {
+    if (event.target.closest('.minimize-btn, .maximize-btn, .close-btn')) return; // Stops drag if clicking a button
+
+    isDragging = true;
+
+    // Get the initial mouse position relative to the window
+    const rect = resumeWindow.getBoundingClientRect();
+    offsetX = event.clientX - rect.left;
+    offsetY = event.clientY - rect.top;
+
+    document.addEventListener('mousemove', dragWindow);
+    document.addEventListener('mouseup', stopDrag);
+});
+
+function dragWindow(event) {
+    if (!isDragging || isWindowMaximized) return;
+
+    // Calculate new window position
+    let newX = event.clientX - offsetX;
+    let newY = event.clientY - offsetY;
+
+    // Get screen dimensions
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    const taskbarRect = taskbar.getBoundingClientRect();
+    const windowRect = resumeWindow.getBoundingClientRect();
+
+    // Prevent moving past the left and right screen borders
+    if (newX < 0) newX = 0;
+    if (newX + windowRect.width > screenWidth) newX = screenWidth - windowRect.width;
+
+    // Prevent moving above the screen
+    if (newY < 0) newY = 0;
+
+    // Prevent moving into the taskbar
+    if (newY + windowRect.height > taskbarRect.top) newY = taskbarRect.top - windowRect.height;
+
+    // Apply new position
+    resumeWindow.style.left = `${newX}px`;
+    resumeWindow.style.top = `${newY}px`;
+    resumeWindow.style.transform = 'none'; // Remove centering transform
+}
+
+function stopDrag() {
+    isDragging = false;
+    document.removeEventListener('mousemove', dragWindow);
+    document.removeEventListener('mouseup', stopDrag);
+}
+
 resumeIcon.addEventListener('click', openResumeWindow);
 window.addEventListener('resize', fitResumeWindow);
 minimizeBtn.addEventListener('click', () => resumeWindow.style.display = 'none');
 maximizeBtn.addEventListener('click', maximizeResumeWindow);
-closeBtn.addEventListener('click', () => { resumeWindow.style.display = 'none'; taskbar.removeChild(taskbarItem); isWindowOpen = false; });
+closeBtn.addEventListener('click', () => {
+    resumeWindow.style.display = 'none';
+    isWindowOpen = false;
+
+    // Remove the taskbar icon when closing
+    if (taskbarItem && taskbar.contains(taskbarItem)) {
+        taskbar.removeChild(taskbarItem);
+        taskbarItem = null; // Ensure it's recreated on next open
+    }
+});
