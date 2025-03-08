@@ -3,45 +3,55 @@ const taskbarHeight = parseInt(getComputedStyle(document.documentElement).getPro
 
 let windows = {}; // Stores window states by ID
 
-function openWindow(windowId, iconSrc) {
+function setupWindowControls(windowId) {
     const windowElement = document.getElementById(windowId);
     if (!windowElement) return;
 
-    if (!windows[windowId]) {
-        windows[windowId] = {
-            isOpen: false,
-            isMaximized: false,
-            taskbarItem: null,
-            previousStyles: {}
-        };
-    }
+    const minimizeBtn = windowElement.querySelector('.minimize-btn');
+    const maximizeBtn = windowElement.querySelector('.maximize-btn');
+    const closeBtn = windowElement.querySelector('.close-btn');
 
-    const windowState = windows[windowId];
+    minimizeBtn.addEventListener('click', () => minimizeWindow(windowId));
+    maximizeBtn.addEventListener('click', () => maximizeWindow(windowId));
+    closeBtn.addEventListener('click', () => closeWindow(windowId));
 
-    if (!windowState.isOpen) {
-        windowElement.style.display = 'block';
-        fitWindow(windowId);
+    setupDragFunctionality(windowId);
+}
 
-        // Ensure taskbar icon exists
-        if (!windowState.taskbarItem || !document.body.contains(windowState.taskbarItem)) {
-            const taskbarItem = document.createElement('div');
-            taskbarItem.classList.add('taskbar-item');
-            taskbarItem.innerHTML = `<img src="${iconSrc}" alt="${windowId} Icon" class="taskbar-icon-img" />`;
+function openWindow(baseId, iconSrc) {
+    const instanceId = `${baseId}-${Date.now()}`;
+    const baseWindow = document.getElementById(baseId);
+    if (!baseWindow) return;
 
-            taskbarItem.addEventListener('click', () => {
-                if (windowElement.style.display === 'none') {
-                    windowElement.style.display = 'block';
-                } else {
-                    windowElement.style.display = 'none';
-                }
-            });
+    const newWindow = baseWindow.cloneNode(true);
+    newWindow.id = instanceId;
+    newWindow.style.display = 'block';
+    document.body.appendChild(newWindow);
 
-            taskbar.appendChild(taskbarItem);
-            windowState.taskbarItem = taskbarItem;
+    windows[instanceId] = {
+        isOpen: true,
+        isMaximized: false,
+        taskbarItem: null,
+        previousStyles: {}
+    };
+
+    fitWindow(instanceId);
+
+    const taskbarItem = document.createElement('div');
+    taskbarItem.classList.add('taskbar-item');
+    taskbarItem.innerHTML = `<img src="${iconSrc}" alt="${instanceId} Icon" class="taskbar-icon-img" />`;
+
+    taskbarItem.addEventListener('click', () => {
+        const windowElement = document.getElementById(instanceId);
+        if (windowElement) {
+            windowElement.style.display = windowElement.style.display === 'none' ? 'block' : 'none';
         }
+    });
 
-        windowState.isOpen = true;
-    }
+    taskbar.appendChild(taskbarItem);
+    windows[instanceId].taskbarItem = taskbarItem;
+
+    setupWindowControls(instanceId);
 }
 
 function fitWindow(windowId) {
@@ -155,7 +165,3 @@ document.addEventListener('mousedown', (event) => {
 document.getElementById('resumeIcon').addEventListener('click', () => {
     openWindow('resumeWindow', 'static/images/pdf.svg');
 });
-
-document.getElementById('minimizeBtn').addEventListener('click', () => minimizeWindow('resumeWindow'));
-document.getElementById('maximizeBtn').addEventListener('click', () => maximizeWindow('resumeWindow'));
-document.getElementById('closeBtn').addEventListener('click', () => closeWindow('resumeWindow'));
