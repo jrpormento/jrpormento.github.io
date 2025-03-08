@@ -28,30 +28,105 @@ function openWindow(baseId, iconSrc) {
     newWindow.style.display = 'block';
     document.body.appendChild(newWindow);
 
-    windows[instanceId] = {
-        isOpen: true,
-        isMaximized: false,
-        taskbarItem: null,
-        previousStyles: {}
-    };
+    if (!windows[baseId]) {
+        windows[baseId] = {
+            instances: [],
+            taskbarItem: null
+        };
+    }
 
+    windows[baseId].instances.push(instanceId);
     fitWindow(instanceId);
 
-    const taskbarItem = document.createElement('div');
-    taskbarItem.classList.add('taskbar-item');
-    taskbarItem.innerHTML = `<img src="${iconSrc}" alt="${instanceId} Icon" class="taskbar-icon-img" />`;
+    // If no taskbar item exists, create one
+    if (!windows[baseId].taskbarItem) {
+        const taskbarItem = document.createElement('div');
+        taskbarItem.classList.add('taskbar-item');
+        taskbarItem.innerHTML = `<img src="${iconSrc}" alt="${baseId} Icon" class="taskbar-icon-img" />`;
 
-    taskbarItem.addEventListener('click', () => {
-        const windowElement = document.getElementById(instanceId);
-        if (windowElement) {
-            windowElement.style.display = windowElement.style.display === 'none' ? 'block' : 'none';
-        }
-    });
+        // Taskbar item click opens selection menu
+        taskbarItem.addEventListener('click', () => {
+            if (windows[baseId].instances.length === 1) {
+                toggleWindow(windows[baseId].instances[0]); // Single instance: toggle visibility
+            } else {
+                showWindowSelectionMenu(baseId, taskbarItem);
+            }
+        });
 
-    taskbar.appendChild(taskbarItem);
-    windows[instanceId].taskbarItem = taskbarItem;
+        taskbar.appendChild(taskbarItem);
+        windows[baseId].taskbarItem = taskbarItem;
+    }
 
     setupWindowControls(instanceId);
+}
+
+function showWindowSelectionMenu(baseId, taskbarItem) {
+    let menu = document.getElementById(`menu-${baseId}`);
+
+    if (menu) {
+        menu.remove();
+        document.removeEventListener('click', closeMenuOnClickOutside);
+        return;
+    }
+
+    menu = document.createElement('div');
+    menu.id = `menu-${baseId}`;
+    menu.classList.add('window-selection-menu');
+    menu.style.position = 'absolute';
+    menu.style.background = 'white';
+    menu.style.border = '1px solid #ccc';
+    menu.style.padding = '5px';
+    menu.style.boxShadow = '0px 4px 6px rgba(0, 0, 0, 0.2)';
+    menu.style.zIndex = '1000';
+
+    windows[baseId].instances.forEach(instanceId => {
+        const menuItem = document.createElement('div');
+        menuItem.classList.add('window-selection-item');
+        menuItem.textContent = `Window ${instanceId.split('-')[1]}`;
+        menuItem.style.padding = '5px 10px';
+        menuItem.style.cursor = 'pointer';
+
+        menuItem.addEventListener('click', () => {
+            toggleWindow(instanceId);
+            menu.remove();
+            document.removeEventListener('click', closeMenuOnClickOutside);
+        });
+
+        menu.appendChild(menuItem);
+    });
+
+    positionMenu(menu, taskbarItem);
+    
+    setTimeout(() => {
+        document.addEventListener('click', closeMenuOnClickOutside);
+    }, 0);
+}
+
+function closeMenuOnClickOutside(event) {
+    const menus = document.querySelectorAll('.window-selection-menu');
+    menus.forEach(menu => {
+        if (!menu.contains(event.target)) {
+            menu.remove();
+            document.removeEventListener('click', closeMenuOnClickOutside);
+        }
+    });
+}
+
+function positionMenu(menu, taskbarItem) {
+    document.body.appendChild(menu); // Append first to get correct size
+
+    requestAnimationFrame(() => { // Wait for rendering
+        const rect = taskbarItem.getBoundingClientRect();
+        menu.style.left = `${rect.left}px`;
+        menu.style.top = `${rect.top - menu.offsetHeight}px`;
+    });
+}
+
+function toggleWindow(windowId) {
+    const windowElement = document.getElementById(windowId);
+    if (!windowElement) return;
+
+    windowElement.style.display = windowElement.style.display === 'none' ? 'block' : 'none';
 }
 
 function fitWindow(windowId) {
@@ -69,22 +144,28 @@ function maximizeWindow(windowId) {
     const windowElement = document.getElementById(windowId);
     if (!windowElement) return;
 
-    const windowState = windows[windowId];
+    // Extract the base ID (e.g., "resumeWindow" from "resumeWindow-123456789")
+    const baseId = windowId.split('-')[0];
+    const windowState = windows[baseId]?.instances.find(id => id === windowId);
+
     if (!windowState) return;
 
-    if (!windowState.isMaximized) {
-        windowState.previousStyles = {
+    if (!windowElement.dataset.isMaximized || windowElement.dataset.isMaximized === "false") {
+        // Save current window styles before maximizing
+        windowElement.dataset.previousStyles = JSON.stringify({
             width: windowElement.style.width,
             height: windowElement.style.height,
             top: windowElement.style.top,
             left: windowElement.style.left,
             transform: windowElement.style.transform,
             boxShadow: windowElement.style.boxShadow
-        };
+        });
 
+        // Get available screen space (excluding taskbar)
         const taskbarRect = taskbar.getBoundingClientRect();
         const availableHeight = taskbarRect.top;
 
+        // Apply full-screen styles
         windowElement.style.width = '100vw';
         windowElement.style.height = `${availableHeight}px`;
         windowElement.style.top = '0';
@@ -92,10 +173,13 @@ function maximizeWindow(windowId) {
         windowElement.style.transform = 'none';
         windowElement.style.boxShadow = 'none';
 
-        windowState.isMaximized = true;
+        windowElement.dataset.isMaximized = "true";
     } else {
-        Object.assign(windowElement.style, windowState.previousStyles);
-        windowState.isMaximized = false;
+        // Restore previous window position and size
+        const previousStyles = JSON.parse(windowElement.dataset.previousStyles);
+        Object.assign(windowElement.style, previousStyles);
+
+        windowElement.dataset.isMaximized = "false";
     }
 }
 
@@ -110,14 +194,21 @@ function closeWindow(windowId) {
     const windowElement = document.getElementById(windowId);
     if (!windowElement) return;
 
-    windowElement.style.display = 'none';
-    if (windows[windowId]) {
-        windows[windowId].isOpen = false;
+    windowElement.remove();
 
-        // Remove taskbar icon when closed
-        if (windows[windowId].taskbarItem && taskbar.contains(windows[windowId].taskbarItem)) {
-            taskbar.removeChild(windows[windowId].taskbarItem);
-            windows[windowId].taskbarItem = null;
+    // Find baseId from instanceId (e.g., "resumeWindow-123456789")
+    const baseId = windowId.split('-')[0];
+
+    if (windows[baseId]) {
+        // Remove this specific instance from instances array
+        windows[baseId].instances = windows[baseId].instances.filter(id => id !== windowId);
+
+        // ✅ If no more instances exist, remove the taskbar icon
+        if (windows[baseId].instances.length === 0) {
+            if (windows[baseId].taskbarItem && taskbar.contains(windows[baseId].taskbarItem)) {
+                taskbar.removeChild(windows[baseId].taskbarItem);
+            }
+            delete windows[baseId]; // ✅ Completely remove from memory
         }
     }
 }
@@ -165,3 +256,18 @@ document.addEventListener('mousedown', (event) => {
 document.getElementById('resumeIcon').addEventListener('click', () => {
     openWindow('resumeWindow', 'static/images/pdf.svg');
 });
+
+function updateTaskbarTime() {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+
+    hours = hours % 12 || 12; // ✅ Convert 24-hour format to 12-hour
+    const timeString = `${hours}:${minutes} ${ampm}`;
+
+    document.getElementById("taskbar-time").textContent = timeString;
+}
+
+setInterval(updateTaskbarTime, 1000);
+updateTaskbarTime();
