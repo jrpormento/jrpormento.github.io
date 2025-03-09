@@ -2,6 +2,7 @@ const taskbar = document.querySelector('.taskbar');
 const taskbarHeight = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--taskbar-height'));
 
 let windows = {}; // Stores window states by ID
+let windowCounts = {}; // Stores numbering per window type
 
 function setupWindowControls(windowId) {
     const windowElement = document.getElementById(windowId);
@@ -18,7 +19,17 @@ function setupWindowControls(windowId) {
     setupDragFunctionality(windowId);
 }
 
-function openWindow(baseId, iconSrc) {
+function openWindow(baseId, iconSrc, baseTitle = "resume.pdf") {
+    if (!windowCounts[baseId]) {
+        windowCounts[baseId] = 1;
+    }
+
+    // Generate window title
+    let windowTitle = baseTitle;
+    if (windowCounts[baseId] > 1) {
+        windowTitle = `${baseTitle} (${windowCounts[baseId]})`;
+    }
+    
     const instanceId = `${baseId}-${Date.now()}`;
     const baseWindow = document.getElementById(baseId);
     if (!baseWindow) return;
@@ -28,6 +39,9 @@ function openWindow(baseId, iconSrc) {
     newWindow.style.display = 'block';
     document.body.appendChild(newWindow);
 
+    // Assign window title
+    newWindow.dataset.windowTitle = windowTitle;
+    
     if (!windows[baseId]) {
         windows[baseId] = {
             instances: [],
@@ -35,7 +49,9 @@ function openWindow(baseId, iconSrc) {
         };
     }
 
-    windows[baseId].instances.push(instanceId);
+    windows[baseId].instances.push({ id: instanceId, title: windowTitle });
+    windowCounts[baseId]++;
+    
     fitWindow(instanceId);
 
     // If no taskbar item exists, create one
@@ -44,10 +60,9 @@ function openWindow(baseId, iconSrc) {
         taskbarItem.classList.add('taskbar-item');
         taskbarItem.innerHTML = `<img src="${iconSrc}" alt="${baseId} Icon" class="taskbar-icon-img" />`;
 
-        // Taskbar item click opens selection menu
         taskbarItem.addEventListener('click', () => {
             if (windows[baseId].instances.length === 1) {
-                toggleWindow(windows[baseId].instances[0]); // Single instance: toggle visibility
+                toggleWindow(windows[baseId].instances[0].id);
             } else {
                 showWindowSelectionMenu(baseId, taskbarItem);
             }
@@ -62,7 +77,6 @@ function openWindow(baseId, iconSrc) {
 
 function showWindowSelectionMenu(baseId, taskbarItem) {
     let menu = document.getElementById(`menu-${baseId}`);
-
     if (menu) {
         menu.remove();
         document.removeEventListener('click', closeMenuOnClickOutside);
@@ -79,15 +93,15 @@ function showWindowSelectionMenu(baseId, taskbarItem) {
     menu.style.boxShadow = '0px 4px 6px rgba(0, 0, 0, 0.2)';
     menu.style.zIndex = '1000';
 
-    windows[baseId].instances.forEach(instanceId => {
+    windows[baseId].instances.forEach(({ id, title }) => {
         const menuItem = document.createElement('div');
         menuItem.classList.add('window-selection-item');
-        menuItem.textContent = `Window ${instanceId.split('-')[1]}`;
+        menuItem.textContent = title;
         menuItem.style.padding = '5px 10px';
         menuItem.style.cursor = 'pointer';
 
         menuItem.addEventListener('click', () => {
-            toggleWindow(instanceId);
+            toggleWindow(id);
             menu.remove();
             document.removeEventListener('click', closeMenuOnClickOutside);
         });
@@ -96,7 +110,6 @@ function showWindowSelectionMenu(baseId, taskbarItem) {
     });
 
     positionMenu(menu, taskbarItem);
-    
     setTimeout(() => {
         document.addEventListener('click', closeMenuOnClickOutside);
     }, 0);
@@ -190,25 +203,23 @@ function minimizeWindow(windowId) {
     }
 }
 
+
 function closeWindow(windowId) {
     const windowElement = document.getElementById(windowId);
     if (!windowElement) return;
 
     windowElement.remove();
-
-    // Find baseId from instanceId (e.g., "resumeWindow-123456789")
     const baseId = windowId.split('-')[0];
 
     if (windows[baseId]) {
-        // Remove this specific instance from instances array
-        windows[baseId].instances = windows[baseId].instances.filter(id => id !== windowId);
-
-        // ✅ If no more instances exist, remove the taskbar icon
+        windows[baseId].instances = windows[baseId].instances.filter(instance => instance.id !== windowId);
+        
         if (windows[baseId].instances.length === 0) {
             if (windows[baseId].taskbarItem && taskbar.contains(windows[baseId].taskbarItem)) {
                 taskbar.removeChild(windows[baseId].taskbarItem);
             }
-            delete windows[baseId]; // ✅ Completely remove from memory
+            delete windows[baseId];
+            delete windowCounts[baseId];
         }
     }
 }
@@ -263,7 +274,7 @@ function updateTaskbarTime() {
     const minutes = now.getMinutes().toString().padStart(2, "0");
     const ampm = hours >= 12 ? "PM" : "AM";
 
-    hours = hours % 12 || 12; // ✅ Convert 24-hour format to 12-hour
+    hours = hours % 12 || 12;
     const timeString = `${hours}:${minutes} ${ampm}`;
 
     document.getElementById("taskbar-time").textContent = timeString;
