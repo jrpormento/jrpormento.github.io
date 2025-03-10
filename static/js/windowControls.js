@@ -15,8 +15,6 @@ function setupWindowControls(windowId) {
     minimizeBtn.addEventListener('click', () => minimizeWindow(windowId));
     maximizeBtn.addEventListener('click', () => maximizeWindow(windowId));
     closeBtn.addEventListener('click', () => closeWindow(windowId));
-
-    setupDragFunctionality(windowId);
 }
 
 function adjustOverlay(windowId) {
@@ -197,7 +195,15 @@ function toggleWindow(windowId) {
     const windowElement = document.getElementById(windowId);
     if (!windowElement) return;
 
-    windowElement.style.display = windowElement.style.display === 'none' ? 'block' : 'none';
+    if (windowElement.style.display === 'none') {
+        windowElement.style.display = 'block';
+        const overlay = document.querySelector(`.iframe-overlay[data-window-id="${windowId}"]`);
+        if (overlay) overlay.style.display = "block"; // Restore overlay
+    } else {
+        windowElement.style.display = 'none';
+        const overlay = document.querySelector(`.iframe-overlay[data-window-id="${windowId}"]`);
+        if (overlay) overlay.style.display = "none"; // Hide overlay
+    }
 }
 
 function fitWindow(windowId) {
@@ -241,9 +247,11 @@ function maximizeWindow(windowId) {
         // Update overlay size
         if (overlay) {
             overlay.style.width = '100%';
-            overlay.style.height = `${availableHeight - 30}px`;
+            overlay.style.height = windowElement.dataset.isMaximized === "true"
+                ? `${availableHeight - 30}px`
+                : `calc(100% - 30px)`;
         }
-
+        
         windowElement.dataset.isMaximized = "true";
     } else {
         // Restore previous size and position
@@ -291,7 +299,7 @@ function closeWindow(windowId) {
                 taskbar.removeChild(windows[baseId].taskbarItem);
             }
             delete windows[baseId];
-            delete windowCounts[baseId];
+            windowCounts[baseId] = Math.max(0, windowCounts[baseId] - 1);
         }
     }
 }
@@ -309,6 +317,7 @@ document.addEventListener('mousedown', (event) => {
     let offsetY = event.clientY - windowElement.getBoundingClientRect().top;
 
     function drag(event) {
+        adjustOverlay(windowId);
         let newX = event.clientX - offsetX;
         let newY = event.clientY - offsetY;
 
