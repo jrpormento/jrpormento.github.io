@@ -19,6 +19,60 @@ function setupWindowControls(windowId) {
     setupDragFunctionality(windowId);
 }
 
+function adjustOverlay(windowId) {
+    const windowElement = document.getElementById(windowId);
+    const overlay = document.querySelector(`.iframe-overlay[data-window-id="${windowId}"]`);
+    if (!windowElement || !overlay) return;
+
+    const rect = windowElement.getBoundingClientRect();
+
+    overlay.style.position = "absolute";
+    overlay.style.top = "30px"; // Below window header
+    overlay.style.left = "0";
+    overlay.style.width = "100%";
+    overlay.style.height = `calc(100% - 30px)`;
+    overlay.style.background = "transparent";
+    overlay.style.pointerEvents = "auto";
+    
+    // Sync z-index with the window it belongs to
+    overlay.style.zIndex = windowElement.style.zIndex;
+}
+
+function focusWindow(windowId) {
+    const windowElement = document.getElementById(windowId);
+    if (!windowElement) return;
+
+    // Find the highest z-index among all windows and overlays
+    let highestZIndex = 1000;
+    document.querySelectorAll('.window, .iframe-overlay').forEach(el => {
+        const zIndex = parseInt(el.style.zIndex) || 1000;
+        if (zIndex > highestZIndex) highestZIndex = zIndex;
+    });
+
+    // Set this window and its overlay to the highest z-index + 1
+    const newZIndex = highestZIndex + 1;
+    windowElement.style.zIndex = newZIndex;
+
+    const overlay = document.querySelector(`.iframe-overlay[data-window-id="${windowId}"]`);
+    if (overlay) {
+        overlay.style.zIndex = newZIndex;
+    }
+}
+
+// Attach event listeners to window headers and overlays
+document.addEventListener('mousedown', (event) => {
+    const header = event.target.closest('.window-header');
+    const overlay = event.target.closest('.iframe-overlay');
+
+    if (header || overlay) {
+        const windowElement = header ? header.closest('.window') : document.querySelector(`.window[id="${overlay.dataset.windowId}"]`);
+        if (windowElement) {
+            focusWindow(windowElement.id);
+        }
+    }
+});
+
+
 function openWindow(baseId, iconSrc, baseTitle = "resume.pdf") {
     if (!windowCounts[baseId]) {
         windowCounts[baseId] = 1;
@@ -39,14 +93,18 @@ function openWindow(baseId, iconSrc, baseTitle = "resume.pdf") {
     newWindow.style.display = 'block';
     document.body.appendChild(newWindow);
 
+    // Create overlay for click detection
+    const overlay = document.createElement("div");
+    overlay.classList.add("iframe-overlay");
+    overlay.dataset.windowId = instanceId;
+    newWindow.appendChild(overlay);
+
+    adjustOverlay(instanceId); // Set initial overlay position
+
     // Assign window title
     newWindow.dataset.windowTitle = windowTitle;
-    
     if (!windows[baseId]) {
-        windows[baseId] = {
-            instances: [],
-            taskbarItem: null
-        };
+        windows[baseId] = { instances: [], taskbarItem: null };
     }
 
     windows[baseId].instances.push({ id: instanceId, title: windowTitle });
@@ -157,14 +215,12 @@ function maximizeWindow(windowId) {
     const windowElement = document.getElementById(windowId);
     if (!windowElement) return;
 
-    // Extract the base ID (e.g., "resumeWindow" from "resumeWindow-123456789")
-    const baseId = windowId.split('-')[0];
-    const windowState = windows[baseId]?.instances.find(id => id === windowId);
-
-    if (!windowState) return;
+    const overlay = windowElement.querySelector('.iframe-overlay'); // Get the overlay
+    const taskbarRect = taskbar.getBoundingClientRect();
+    const availableHeight = taskbarRect.top;
 
     if (!windowElement.dataset.isMaximized || windowElement.dataset.isMaximized === "false") {
-        // Save current window styles before maximizing
+        // Save current styles before maximizing
         windowElement.dataset.previousStyles = JSON.stringify({
             width: windowElement.style.width,
             height: windowElement.style.height,
@@ -174,10 +230,6 @@ function maximizeWindow(windowId) {
             boxShadow: windowElement.style.boxShadow
         });
 
-        // Get available screen space (excluding taskbar)
-        const taskbarRect = taskbar.getBoundingClientRect();
-        const availableHeight = taskbarRect.top;
-
         // Apply full-screen styles
         windowElement.style.width = '100vw';
         windowElement.style.height = `${availableHeight}px`;
@@ -186,11 +238,23 @@ function maximizeWindow(windowId) {
         windowElement.style.transform = 'none';
         windowElement.style.boxShadow = 'none';
 
+        // Update overlay size
+        if (overlay) {
+            overlay.style.width = '100%';
+            overlay.style.height = `${availableHeight - 30}px`;
+        }
+
         windowElement.dataset.isMaximized = "true";
     } else {
-        // Restore previous window position and size
+        // Restore previous size and position
         const previousStyles = JSON.parse(windowElement.dataset.previousStyles);
         Object.assign(windowElement.style, previousStyles);
+
+        // Restore overlay size
+        if (overlay) {
+            overlay.style.width = '100%';
+            overlay.style.height = `calc(100% - 30px)`;
+        }
 
         windowElement.dataset.isMaximized = "false";
     }
@@ -201,12 +265,20 @@ function minimizeWindow(windowId) {
     if (windowElement) {
         windowElement.style.display = 'none';
     }
+
+    // Hide overlay when minimized
+    const overlay = document.querySelector(`.iframe-overlay[data-window-id="${windowId}"]`);
+    if (overlay) overlay.style.display = "none";
 }
 
 
 function closeWindow(windowId) {
     const windowElement = document.getElementById(windowId);
     if (!windowElement) return;
+
+    //Remove overlay
+    const overlay = document.querySelector(`.iframe-overlay[data-window-id="${windowId}"]`);
+    if (overlay) overlay.remove();
 
     windowElement.remove();
     const baseId = windowId.split('-')[0];
@@ -262,6 +334,13 @@ document.addEventListener('mousedown', (event) => {
 
     document.addEventListener('mousemove', drag);
     document.addEventListener('mouseup', stopDrag);
+});
+
+document.addEventListener("mousemove", (event) => {
+    document.querySelectorAll(".iframe-overlay").forEach(overlay => {
+        const windowId = overlay.dataset.windowId;
+        adjustOverlay(windowId); // Adjust overlay when moving windows
+    });
 });
 
 document.getElementById('resumeIcon').addEventListener('click', () => {

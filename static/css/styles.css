@@ -223,3 +223,14 @@ body {
 .window-selection-item:hover {
     background: rgba(0, 0, 0, 0.1);
 }
+
+.iframe-overlay {
+  position: absolute;
+  top: 30px; /* Below window header */
+  left: 0;
+  width: 100%;
+  height: calc(100% - 30px); /* Adjust height dynamically */
+  background: transparent;
+  pointer-events: auto; /* Allows clicks to be registered */
+  z-index: inherit; /* Ensures overlay follows the window's z-index */
+}
