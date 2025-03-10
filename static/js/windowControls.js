@@ -299,7 +299,7 @@ function closeWindow(windowId) {
                 taskbar.removeChild(windows[baseId].taskbarItem);
             }
             delete windows[baseId];
-            windowCounts[baseId] = Math.max(0, windowCounts[baseId] - 1);
+            delete windowCounts[baseId];
         }
     }
 }
