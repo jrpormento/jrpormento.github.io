@@ -322,6 +322,12 @@ function closeWindow(windowId) {
     }
 }
 
+function openAboutMeWindow() {
+    openWindow('aboutMeWindow', 'static/images/user.svg', "About Me");
+}
+
+document.getElementById('aboutMeIcon').addEventListener('click', openAboutMeWindow);
+
 // Dragging logic
 document.addEventListener('mousedown', (event) => {
     const header = event.target.closest('.window-header');

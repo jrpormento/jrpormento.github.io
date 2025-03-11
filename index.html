@@ -11,6 +11,10 @@
 
 <body>
     <div class="desktop">
+        <div id="aboutMeIcon" class="desktop-icon">
+            <img src="static/images/user.svg" alt="About Me Icon" class="desktop-icon-img" />
+            <span class="desktop-icon-name">About Me</span>
+        </div>
         <div id="resumeIcon" class="desktop-icon">
             <img src="static/images/pdf.svg" alt="Resume Icon" class="desktop-icon-img" />
             <span class="desktop-icon-name">resume.pdf</span>
@@ -47,6 +51,36 @@
         </div>
         <div class="window-content">
             <iframe id="pdfViewer" src="static/data/resume.pdf#toolbar=0" width="100%" height="100%" frameborder="0"></iframe>
+        </div>
+    </div>
+
+    <div class="window about-me-window" id="aboutMeWindow">
+        <div class="window-header" id="windowHeaderAboutMe">
+            <button class="minimize-btn" id="minimizeBtnAboutMe">
+                <img src="static/images/minimize.svg" alt="Minimize" />
+            </button>
+            <button class="maximize-btn" id="maximizeBtnAboutMe">
+                <img src="static/images/maximize.svg" alt="Maximize" />
+            </button>
+            <button class="close-btn" id="closeBtnAboutMe">
+                <img src="static/images/close.svg" alt="Close" />
+            </button>
+        </div>
+        <div class="window-content">
+            <div class="about-me-content">
+                <div class="text-wrap">
+                    <h1>About Me</h1>
+                    <p>
+                        Hello! My name is Jethrel Pormento, and I am a graduate of Memorial University with a degree in
+                        Computer Engineering. I designed and developed this website using only HTML, CSS, and JavaScript,
+                        without relying on any external libraries or frameworks. I made this website primarily to showcase 
+                        my skills, projects and work experience. This website is still a work in progress, and as I create 
+                        and contribute to more projects, they will be added here. Feel free to explore this site, I have 
+                        tried to recreate many classic features for these windows such as minimizing and refocusing.
+                    </p>
+                </div>
+                <img src="static/images/gradpic.jpg" alt="About Me Image" class="about-me-image" />
+            </div>
         </div>
     </div>
 
