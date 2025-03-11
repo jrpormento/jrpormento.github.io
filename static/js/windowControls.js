@@ -70,6 +70,24 @@ document.addEventListener('mousedown', (event) => {
     }
 });
 
+// Function to handle opening URLs when the icons are clicked
+function handleIconClick(event) {
+    // Check if the clicked element has the class 'url-icon'
+    const icon = event.target.closest(".url-icon");
+    if (icon) {
+        // Find the link inside the clicked icon
+        const link = icon.querySelector("a");
+        if (link) {
+            const url = link.getAttribute("href"); // Get the URL
+            if (url) {
+                window.open(url, "_blank"); // Open the URL in a new tab
+            }
+        }
+    }
+}
+
+// Add event listener to the document to handle clicks on URL icons
+document.body.addEventListener("click", handleIconClick);
 
 function openWindow(baseId, iconSrc, baseTitle = "resume.pdf") {
     if (!windowCounts[baseId]) {

@@ -65,6 +65,23 @@ body {
     1px 1px 0 black;  
 }
 
+.url-icon {
+  text-decoration: none; /* Remove default link styling */
+}
+
+.url-icon .desktop-icon-name {
+  color: white;
+  text-shadow: 
+    -1px -1px 0 black,  
+    1px -1px 0 black,  
+    -1px 1px 0 black,  
+    1px 1px 0 black;  
+}
+
+.url-icon:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
 .taskbar {
   position: fixed;
   bottom: 0;
