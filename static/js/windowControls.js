@@ -127,6 +127,7 @@ function openWindow(baseId, iconSrc, baseTitle = "resume.pdf") {
     windowCounts[baseId]++;
     
     fitWindow(instanceId);
+    focusWindow(instanceId);
 
     // If no taskbar item exists, create one
     if (!windows[baseId].taskbarItem) {
