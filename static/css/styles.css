@@ -1,6 +1,8 @@
 :root {
   --window-width: 80%;
   --window-height: 80%;
+  --about-me-window-width: min(40%, 600px);
+  --about-me-window-height: min(80%, 700px);
   --icon-size: min(10vw, 64px);
   --icon-text-width: 80px;
 }
@@ -21,8 +23,12 @@ body {
 }
 
 .about-me-window {
-  --window-width: 700px;
-  --window-height: 800px;
+  width: var(--about-me-window-width);
+  height: var(--about-me-window-height);
+  min-width: 300px;
+  min-height: 400px;
+  max-width: 90vw;
+  max-height: 90vh;
 }
 
 .about-me-content {
