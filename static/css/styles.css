@@ -305,3 +305,16 @@ body {
   pointer-events: auto; /* Allows clicks to be registered */
   z-index: inherit; /* Ensures overlay follows the window's z-index */
 }
+
+.open-online-btn {
+  font-size: 14px;
+  padding: 0 10px;
+  height: 28px;
+  line-height: 28px;
+  position: absolute;
+  left: 10px;
+}
+
+.open-online-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
