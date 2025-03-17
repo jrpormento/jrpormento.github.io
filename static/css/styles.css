@@ -308,13 +308,21 @@ body {
 
 .open-online-btn {
   font-size: 14px;
-  padding: 0 10px;
-  height: 28px;
-  line-height: 28px;
+  height: 20px;
+  line-height: 20px;
   position: absolute;
   left: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0px 4px;
+  border: 1px solid #ccc;
+  background-color: #f0f0f0;
+  color: black;
+  text-decoration: none;
 }
 
 .open-online-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
+  background-color: #e0e0e0;
 }
