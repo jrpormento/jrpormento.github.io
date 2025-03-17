@@ -327,6 +327,10 @@ function openAboutMeWindow() {
     openWindow('aboutMeWindow', 'static/images/user.svg', "About Me");
 }
 
+window.addEventListener("load", function () {
+    openAboutMeWindow();
+  });  
+
 document.getElementById('aboutMeIcon').addEventListener('click', openAboutMeWindow);
 
 // Dragging logic
